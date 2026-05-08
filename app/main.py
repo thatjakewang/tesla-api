@@ -1,6 +1,6 @@
 from fastapi import FastAPI
-from app.routers import tesla
 from fastapi.middleware.cors import CORSMiddleware
+from app.routers import tesla
 
 app = FastAPI(
     title="My Tesla Analytics API",
