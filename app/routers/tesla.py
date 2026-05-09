@@ -21,6 +21,11 @@ class ChargingRecordCreate(BaseModel):
     amount: int
     kwh: float
 
+class CarExpenseCreate(BaseModel):
+    date: date
+    item: str
+    amount: int
+
 @router.get("/stats")
 def get_stats(db: Session = Depends(get_db)):
     expense_query = text("""
@@ -168,5 +173,38 @@ def create_charging_record(
             "provider": payload.provider,
             "amount": payload.amount,
             "kwh": payload.kwh,
+        },
+    }
+
+@router.post("/car-expenses")
+def create_car_expense(
+    payload: CarExpenseCreate,
+    db: Session = Depends(get_db),
+    _: None = Depends(verify_shortcut_api_key),
+):
+    query = text("""
+        INSERT INTO car_expenses
+            (date, item, amount)
+        VALUES
+            (:date, :item, :amount)
+    """)
+
+    db.execute(
+        query,
+        {
+            "date": payload.date,
+            "item": payload.item,
+            "amount": payload.amount,
+        },
+    )
+    db.commit()
+
+    return {
+        "status": "success",
+        "message": "Car expense created",
+        "data": {
+            "date": payload.date.isoformat(),
+            "item": payload.item,
+            "amount": payload.amount,
         },
     }
