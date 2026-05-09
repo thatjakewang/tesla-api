@@ -1,3 +1,4 @@
+import os
 from fastapi import APIRouter, Depends
 from sqlalchemy import text
 from sqlalchemy.orm import Session
@@ -11,7 +12,7 @@ router = APIRouter()
 def get_stats(db: Session = Depends(get_db)):
     expense_query = text("""
         SELECT
-            COALESCE(SUM(amount), 0) AS total_cost
+            COALESCE(SUM(amount), 0) AS car_expense_total
         FROM car_expenses
     """)
 
@@ -25,15 +26,27 @@ def get_stats(db: Session = Depends(get_db)):
     expense = db.execute(expense_query).mappings().one()
     charging = db.execute(charging_query).mappings().one()
 
-    total_cost = float(expense["total_cost"])
+    car_expense_total = float(expense["car_expense_total"])
     charging_cost = float(charging["charging_cost"])
     energy_kwh = float(charging["energy_kwh"])
+
+    total_cost = car_expense_total + charging_cost
+    avg_price_per_kwh = round(charging_cost / energy_kwh, 2) if energy_kwh else 0
+
+    try:
+        odometer_km = int(os.getenv("TESLA_ODOMETER_KM", "21471"))
+    except ValueError:
+        odometer_km = 21471
+
+    cost_per_km = round(total_cost / odometer_km, 2) if odometer_km else 0
 
     return {
         "total_cost": total_cost,
         "charging_cost": charging_cost,
         "energy_kwh": round(energy_kwh, 2),
-        "avg_price_per_kwh": round(charging_cost / energy_kwh, 2) if energy_kwh else 0,
+        "avg_price_per_kwh": avg_price_per_kwh,
+        "odometer_km": odometer_km,
+        "cost_per_km": cost_per_km,
     }
 
 
