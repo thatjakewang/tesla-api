@@ -1,12 +1,25 @@
 import os
-from fastapi import APIRouter, Depends
 from sqlalchemy import text
 from sqlalchemy.orm import Session
+from fastapi import APIRouter, Depends, Header, HTTPException
+from app.config import get_settings
+from datetime import date
+from pydantic import BaseModel
 
 from app.database import get_db
 
 router = APIRouter()
+settings = get_settings()
 
+def verify_shortcut_api_key(x_api_key: str = Header(...)):
+    if x_api_key != settings.shortcut_api_key:
+        raise HTTPException(status_code=401, detail="Invalid API key")
+
+class ChargingRecordCreate(BaseModel):
+    charge_date: date
+    provider: str
+    amount: int
+    kwh: float
 
 @router.get("/stats")
 def get_stats(db: Session = Depends(get_db)):
@@ -122,3 +135,38 @@ def get_monthly_charging_trend(db: Session = Depends(get_db)):
         }
         for row in rows
     ]
+
+@router.post("/charging-records")
+def create_charging_record(
+    payload: ChargingRecordCreate,
+    db: Session = Depends(get_db),
+    _: None = Depends(verify_shortcut_api_key),
+):
+    query = text("""
+        INSERT INTO charging_records
+            (charge_date, provider, amount, kwh)
+        VALUES
+            (:charge_date, :provider, :amount, :kwh)
+    """)
+
+    db.execute(
+        query,
+        {
+            "charge_date": payload.charge_date,
+            "provider": payload.provider,
+            "amount": payload.amount,
+            "kwh": payload.kwh,
+        },
+    )
+    db.commit()
+
+    return {
+        "status": "success",
+        "message": "Charging record created",
+        "data": {
+            "charge_date": payload.charge_date.isoformat(),
+            "provider": payload.provider,
+            "amount": payload.amount,
+            "kwh": payload.kwh,
+        },
+    }
