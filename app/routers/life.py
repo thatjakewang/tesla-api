@@ -4,7 +4,6 @@ from zoneinfo import ZoneInfo, ZoneInfoNotFoundError
 
 from fastapi import APIRouter, Depends, Header, HTTPException
 from fastapi.responses import PlainTextResponse
-from openai import OpenAI, OpenAIError
 from pydantic import BaseModel
 from sqlalchemy import text
 from sqlalchemy.orm import Session
@@ -55,9 +54,14 @@ def build_daily_expense_message(
     )
 
 
-def create_openai_client() -> OpenAI:
+def create_openai_client():
     if not settings.openai_api_key:
         raise HTTPException(status_code=500, detail="OPENAI_API_KEY is not configured")
+
+    try:
+        from openai import OpenAI
+    except ImportError as exc:
+        raise HTTPException(status_code=500, detail="openai package is not installed") from exc
 
     return OpenAI(api_key=settings.openai_api_key)
 
@@ -293,16 +297,29 @@ def get_daily_expense_ai_summary(
             input=json.dumps(prompt_payload, ensure_ascii=False),
             max_output_tokens=320,
         )
-    except OpenAIError as exc:
-        raise HTTPException(
-            status_code=502,
-            detail=f"OpenAI API request failed: {exc}",
-        ) from exc
+    except Exception as exc:
+        error_message = exc.detail if isinstance(exc, HTTPException) else str(exc)
+
+        return {
+            "status": "openai_unavailable",
+            "date": report_date.isoformat(),
+            "message": fallback_message,
+            "fallback_message": fallback_message,
+            "openai_error": error_message,
+            "data": {
+                "total_amount": total_amount,
+                "record_count": record_count,
+                "categories": categories,
+                "recent_days": recent_days,
+            },
+        }
+
+    message = response.output_text.strip() or fallback_message
 
     return {
         "status": "success",
         "date": report_date.isoformat(),
-        "message": response.output_text.strip(),
+        "message": message,
         "fallback_message": fallback_message,
         "data": {
             "total_amount": total_amount,
