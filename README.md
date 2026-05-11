@@ -16,6 +16,9 @@ Create a `.env` file with the following:
 ```env
 DATABASE_URL=postgresql://user:password@host:port/dbname
 SHORTCUT_API_KEY=your_api_key
+OPENAI_API_KEY=your_openai_api_key
+OPENAI_MODEL=gpt-5.4-mini
+APP_TIMEZONE=Asia/Taipei
 TESLA_ODOMETER_KM=21471
 ```
 
@@ -48,6 +51,8 @@ API docs available at http://localhost:8000/docs after startup.
 |--------|------|-------------|
 | POST | `/api/tesla/charging-records` | Create a charging record |
 | POST | `/api/tesla/car-expenses` | Create a car expense |
+| POST | `/api/life/expenses` | Create a daily expense |
+| GET | `/api/life/expenses/daily-ai-summary` | Create an AI daily expense summary for iMessage |
 
 ### POST `/api/tesla/charging-records`
 
@@ -69,6 +74,46 @@ API docs available at http://localhost:8000/docs after startup.
   "amount": 25000
 }
 ```
+
+### GET `/api/life/expenses/daily-ai-summary`
+
+Returns a short Traditional Chinese message for iPhone Shortcuts to send via iMessage.
+
+Headers:
+
+```http
+x-api-key: your_api_key
+```
+
+Optional query params:
+
+```text
+target_date=2026-05-11
+```
+
+Response:
+
+```json
+{
+  "status": "success",
+  "date": "2026-05-11",
+  "message": "2026-05-11 花費總覽...",
+  "data": {
+    "total_amount": 520,
+    "record_count": 3,
+    "categories": []
+  }
+}
+```
+
+In iPhone Shortcuts:
+
+1. Add `Get Contents of URL`.
+2. URL: `https://your-domain.com/api/life/expenses/daily-ai-summary`.
+3. Method: `GET`.
+4. Headers: `x-api-key` = your shortcut API key.
+5. Get `message` from the JSON response.
+6. Use `Send Message` to send `message` via iMessage.
 
 ## CORS
 
