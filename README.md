@@ -52,7 +52,8 @@ API docs available at http://localhost:8000/docs after startup.
 | POST | `/api/tesla/charging-records` | Create a charging record |
 | POST | `/api/tesla/car-expenses` | Create a car expense |
 | POST | `/api/life/expenses` | Create a daily expense |
-| GET | `/api/life/expenses/daily-ai-summary` | Create an AI daily expense summary for iMessage |
+| GET | `/api/life/expenses/daily-ai-summary` | Create an AI daily expense summary JSON response |
+| GET | `/api/life/expenses/daily-ai-summary/message` | Create an AI daily expense summary plain text message |
 
 ### POST `/api/tesla/charging-records`
 
@@ -106,14 +107,13 @@ Response:
 }
 ```
 
-In iPhone Shortcuts:
+For the simplest iPhone Shortcuts setup, use the plain text endpoint:
 
 1. Add `Get Contents of URL`.
-2. URL: `https://your-domain.com/api/life/expenses/daily-ai-summary`.
+2. URL: `https://your-domain.com/api/life/expenses/daily-ai-summary/message`.
 3. Method: `GET`.
 4. Headers: `x-api-key` = your shortcut API key.
-5. Get `message` from the JSON response.
-6. Use `Send Message` to send `message` via iMessage.
+5. Use `Send Message` to send the URL content via iMessage.
 
 ## CORS
 

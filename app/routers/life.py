@@ -3,6 +3,7 @@ import json
 from zoneinfo import ZoneInfo, ZoneInfoNotFoundError
 
 from fastapi import APIRouter, Depends, Header, HTTPException
+from fastapi.responses import PlainTextResponse
 from openai import OpenAI, OpenAIError
 from pydantic import BaseModel
 from sqlalchemy import text
@@ -310,3 +311,18 @@ def get_daily_expense_ai_summary(
             "recent_days": recent_days,
         },
     }
+
+
+@router.get("/expenses/daily-ai-summary/message", response_class=PlainTextResponse)
+def get_daily_expense_ai_summary_message(
+    target_date: date | None = None,
+    db: Session = Depends(get_db),
+    _: None = Depends(verify_shortcut_api_key),
+):
+    summary = get_daily_expense_ai_summary(
+        target_date=target_date,
+        db=db,
+        _=_,
+    )
+
+    return PlainTextResponse(summary["message"])
