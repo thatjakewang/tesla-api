@@ -8,6 +8,8 @@ class Settings(BaseSettings):
     openai_api_key: str | None = None
     openai_model: str = "gpt-5.4-mini"
     app_timezone: str = "Asia/Taipei"
+    monthly_income: str | None = None
+    monthly_fixed_expenses: str | None = None
 
     class Config:
         env_file = ".env"

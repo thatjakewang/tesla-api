@@ -19,6 +19,8 @@ SHORTCUT_API_KEY=your_api_key
 OPENAI_API_KEY=your_openai_api_key
 OPENAI_MODEL=gpt-5.4-mini
 APP_TIMEZONE=Asia/Taipei
+MONTHLY_INCOME=80000
+MONTHLY_FIXED_EXPENSES=35000
 TESLA_ODOMETER_KM=21471
 ```
 
@@ -104,7 +106,13 @@ Response:
   "data": {
     "total_amount": 1401,
     "record_count": 15,
-    "categories": []
+    "categories": [],
+    "budget": {
+      "monthly_income_configured": true,
+      "monthly_fixed_expenses_configured": true,
+      "disposable_used_ratio": 3.1,
+      "disposable_remaining": 43599
+    }
   }
 }
 ```
